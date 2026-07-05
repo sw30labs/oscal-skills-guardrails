@@ -98,7 +98,8 @@ the audit trail: `admit ... --approve reviewed-skill`.
 ## The gate as a CI status check
 
 [`.github/workflows/skill-gate.yml`](.github/workflows/skill-gate.yml) runs on every
-PR touching the skill catalog, the policy, or the gate itself — two required checks:
+PR (unfiltered by design — path-filtered required checks silently block unrelated
+PRs) — two checks meant to be marked required in branch protection:
 
 **admit** adjudicates the catalog against the OSCAL profile (Skillspector engine
 checked out from its repo; the LLM judge joins when repo vars `SKILL_JUDGE_URL` +

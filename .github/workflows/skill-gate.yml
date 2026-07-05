@@ -24,24 +24,13 @@
 
 name: skill-gate
 
+# No `paths:` filter, deliberately: both jobs are branch-protection required checks,
+# and a path-filtered required check never reports on unrelated PRs — blocking their
+# merge forever. The full gate costs ~25s; run it on every PR and push to main.
 on:
   pull_request:
-    paths:
-      - "examples/skills/**"
-      - "skills.lock.json"
-      - "data/oscal-policies/**"
-      - "src/deepagent_skill_guardrails/**"
-      - "scripts/**"
-      - ".github/workflows/skill-gate.yml"
   push:
     branches: [main]
-    paths:
-      - "examples/skills/**"
-      - "skills.lock.json"
-      - "data/oscal-policies/**"
-      - "src/deepagent_skill_guardrails/**"
-      - "scripts/**"
-      - ".github/workflows/skill-gate.yml"
   workflow_dispatch:
 
 permissions:

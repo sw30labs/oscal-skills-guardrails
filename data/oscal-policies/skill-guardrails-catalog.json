@@ -1,0 +1,170 @@
+{
+  "catalog": {
+    "uuid": "8f2a1c40-9d3e-4b5a-a1f0-6c7d8e9f0a1b",
+    "metadata": {
+      "title": "Skill Guardrails Control Catalog (SG)",
+      "version": "0.1.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-07-04T00:00:00Z",
+      "remarks": "Controls for governing Agent Skills (SKILL.md directories) in DeepAgents/LangGraph runtimes. Prop namespace: https://sw30labs.com/ns/osg"
+    },
+    "groups": [
+      {
+        "id": "sg",
+        "title": "Skill Guardrails",
+        "controls": [
+          {
+            "id": "sg-1",
+            "title": "Skill Admission Scanning",
+            "params": [
+              { "id": "osg-max-scan-severity", "label": "maximum tolerated scan severity (none|info|low|medium|high|critical)" },
+              { "id": "osg-interrupt-at-severity", "label": "severity at or above which human approval is required" },
+              { "id": "osg-min-score", "label": "minimum Skillspector score (0-100)" },
+              { "id": "osg-min-grade", "label": "minimum Skillspector grade (A-F)" }
+            ],
+            "parts": [
+              {
+                "id": "sg-1_smt",
+                "name": "statement",
+                "prose": "Every skill directory is scanned by an approved scanner before it is exposed to any agent. Findings are normalized to a severity scale and compared to the declared risk appetite (max severity, minimum score, minimum grade). Skills exceeding the appetite are denied admission; the scanner failing, timing out, or returning no score when a score threshold is set is treated as a denial (fail closed)."
+              }
+            ],
+            "links": [
+              { "href": "#ra-5", "rel": "related" },
+              { "href": "#si-3", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-2",
+            "title": "Skill Integrity Verification",
+            "parts": [
+              {
+                "id": "sg-2_smt",
+                "name": "statement",
+                "prose": "A content digest (SHA-256 over all files) is computed at admission and re-verified before skill content is loaded at runtime, preventing time-of-check to time-of-use substitution of scanned skill content."
+              }
+            ],
+            "links": [
+              { "href": "#si-7", "rel": "related" },
+              { "href": "#sr-4", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-3",
+            "title": "Skill Visibility and Least Exposure",
+            "params": [
+              { "id": "osg-allow-skills", "label": "default skill allow patterns" }
+            ],
+            "parts": [
+              {
+                "id": "sg-3_smt",
+                "name": "statement",
+                "prose": "Each agent, subagent, and role is granted visibility only to explicitly allowed skills (glob patterns). Deny patterns take precedence over allow patterns. Absent an allow list, no skills are exposed."
+              }
+            ],
+            "links": [
+              { "href": "#ac-3", "rel": "related" },
+              { "href": "#cm-7", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-4",
+            "title": "Tool Least Functionality",
+            "params": [
+              { "id": "osg-deny-tools", "label": "globally denied tool patterns" }
+            ],
+            "parts": [
+              {
+                "id": "sg-4_smt",
+                "name": "statement",
+                "prose": "Tool calls are pre-filtered per agent and enforced at runtime by middleware. Skills may further restrict which tools are usable in their context. Deny patterns take precedence; unknown tools outside an allow list are denied."
+              }
+            ],
+            "links": [
+              { "href": "#cm-7.5", "rel": "related" },
+              { "href": "#ac-6", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-5",
+            "title": "Skill Filesystem Protection",
+            "parts": [
+              {
+                "id": "sg-5_smt",
+                "name": "statement",
+                "prose": "Curated skill directories are read-only to agents; mutations to personal skill areas require human approval. Rules are materialized as DeepAgents FilesystemPermission objects."
+              }
+            ],
+            "links": [
+              { "href": "#ac-6.1", "rel": "related" },
+              { "href": "#cm-5", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-6",
+            "title": "Human Approval Gate",
+            "parts": [
+              {
+                "id": "sg-6_smt",
+                "name": "statement",
+                "prose": "Skills whose scan severity meets the interrupt threshold, or which carry an explicit interrupt effect, require human approval before exposure. Approval decisions are recorded."
+              }
+            ],
+            "links": [
+              { "href": "#ac-3", "rel": "related" },
+              { "href": "#cm-3", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-7",
+            "title": "Skill Provenance and Metadata",
+            "parts": [
+              {
+                "id": "sg-7_smt",
+                "name": "statement",
+                "prose": "Skills must declare required metadata (e.g. owner) in SKILL.md frontmatter; skills missing required provenance metadata are denied admission."
+              }
+            ],
+            "links": [
+              { "href": "#sr-3", "rel": "related" },
+              { "href": "#cm-8", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-9",
+            "title": "Semantic Rubric Review",
+            "params": [
+              { "id": "osg-require-rubric", "label": "require an LLM rubric-judge evidence stream (true|false)" }
+            ],
+            "parts": [
+              {
+                "id": "sg-9_smt",
+                "name": "statement",
+                "prose": "In addition to static scanning, skills are reviewed by an independent LLM judge against a fixed rubric (intent alignment, scope minimality, tool justification, data boundary, influence boundary, provenance, human oversight). Failed criteria produce findings at rubric-defined severities that flow through the same admission gates as static findings. Where required, absence of the rubric evidence stream is itself a denial (fail closed). The judge treats skill content strictly as untrusted data; judge failure is a critical finding."
+              }
+            ],
+            "links": [
+              { "href": "#sa-11", "rel": "related" },
+              { "href": "#ca-2", "rel": "related" }
+            ]
+          },
+          {
+            "id": "sg-8",
+            "title": "Guardrail Audit Logging",
+            "parts": [
+              {
+                "id": "sg-8_smt",
+                "name": "statement",
+                "prose": "Every admission and tool-call decision (effect, reason, matched rule, skill digest) is emitted to an audit sink, suitable for serialization as OSCAL assessment-results."
+              }
+            ],
+            "links": [
+              { "href": "#au-2", "rel": "related" },
+              { "href": "#au-12", "rel": "related" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

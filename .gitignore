@@ -1,0 +1,28 @@
+# Third-party reference repos — have their own .git dirs and local .env files. Never commit.
+references/
+
+# Generated artifacts
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+build/
+dist/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# OS junk
+.DS_Store
+Thumbs.db
+._*

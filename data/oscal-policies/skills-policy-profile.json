@@ -1,0 +1,165 @@
+{
+  "profile": {
+    "uuid": "3c9b7d12-5e4f-4a8b-9c0d-1e2f3a4b5c6d",
+    "metadata": {
+      "title": "Agent Skills Usage Policy Profile",
+      "version": "0.1.0",
+      "oscal-version": "1.1.2",
+      "last-modified": "2026-07-04T00:00:00Z",
+      "remarks": "OSCAL equivalent of examples/policy.yaml. Compiled to GuardrailPolicy by deepagent_skill_guardrails.oscal_loader. Prop namespace: https://sw30labs.com/ns/osg"
+    },
+    "imports": [
+      {
+        "href": "skill-guardrails-catalog.json",
+        "include-controls": [
+          { "with-ids": ["sg-1", "sg-2", "sg-3", "sg-4", "sg-5", "sg-6", "sg-7", "sg-8"] }
+        ]
+      }
+    ],
+    "modify": {
+      "set-parameters": [
+        { "param-id": "osg-max-scan-severity", "values": ["medium"] },
+        { "param-id": "osg-deny-tools", "values": ["shell", "bash", "execute", "eval", "mcp__dangerous__*"] }
+      ],
+      "controls": [
+        {
+          "control-id": "sg-def",
+          "props": [
+            { "name": "osg:target-type", "value": "defaults", "ns": "https://sw30labs.com/ns/osg" },
+            { "name": "osg:schema-version", "value": "0.1" }
+          ]
+        },
+        {
+          "control-id": "sg-agt-wildcard",
+          "props": [
+            { "name": "osg:target-type", "value": "agent" },
+            { "name": "osg:target-id", "value": "*" },
+            { "name": "osg:max-scan-severity", "value": "medium" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:allow-tool", "value": "grep" },
+            { "name": "osg:allow-tool", "value": "glob" },
+            { "name": "osg:allow-tool", "value": "task" },
+            { "name": "osg:deny-tool", "value": "write_file" },
+            { "name": "osg:deny-tool", "value": "edit_file" },
+            { "name": "osg:deny-tool", "value": "execute" }
+          ]
+        },
+        {
+          "control-id": "sg-agt-supervisor",
+          "props": [
+            { "name": "osg:target-type", "value": "agent" },
+            { "name": "osg:target-id", "value": "supervisor" },
+            { "name": "osg:allow-skill", "value": "oscal-*" },
+            { "name": "osg:allow-skill", "value": "guardrails-*" },
+            { "name": "osg:allow-skill", "value": "langgraph-docs" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:allow-tool", "value": "grep" },
+            { "name": "osg:allow-tool", "value": "glob" },
+            { "name": "osg:allow-tool", "value": "task" },
+            { "name": "osg:allow-tool", "value": "scan_skill" },
+            { "name": "osg:allow-tool", "value": "inspect_skill_manifest" },
+            { "name": "osg:deny-tool", "value": "write_file" },
+            { "name": "osg:deny-tool", "value": "edit_file" },
+            { "name": "osg:deny-tool", "value": "execute" },
+            { "name": "osg:interrupt-at-severity", "value": "medium" }
+          ]
+        },
+        {
+          "control-id": "sg-agt-coding-agent",
+          "props": [
+            { "name": "osg:target-type", "value": "agent" },
+            { "name": "osg:target-id", "value": "coding-agent" },
+            { "name": "osg:allow-skill", "value": "langgraph-*" },
+            { "name": "osg:allow-skill", "value": "code-review" },
+            { "name": "osg:allow-skill", "value": "testing" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:allow-tool", "value": "grep" },
+            { "name": "osg:allow-tool", "value": "glob" },
+            { "name": "osg:allow-tool", "value": "write_file" },
+            { "name": "osg:allow-tool", "value": "edit_file" },
+            { "name": "osg:allow-tool", "value": "run_tests" },
+            { "name": "osg:allow-tool", "value": "task" },
+            { "name": "osg:deny-tool", "value": "execute" },
+            { "name": "osg:deny-tool", "value": "shell" },
+            { "name": "osg:max-scan-severity", "value": "medium" },
+            { "name": "osg:min-grade", "value": "B" }
+          ]
+        },
+        {
+          "control-id": "sg-sub-researcher",
+          "props": [
+            { "name": "osg:target-type", "value": "subagent" },
+            { "name": "osg:target-id", "value": "researcher" },
+            { "name": "osg:allow-skill", "value": "langgraph-docs" },
+            { "name": "osg:allow-skill", "value": "web-research" },
+            { "name": "osg:allow-tool", "value": "web_search" },
+            { "name": "osg:allow-tool", "value": "fetch_url" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:deny-tool", "value": "write_file" },
+            { "name": "osg:deny-tool", "value": "edit_file" },
+            { "name": "osg:deny-tool", "value": "execute" }
+          ]
+        },
+        {
+          "control-id": "sg-sub-test-runner",
+          "props": [
+            { "name": "osg:target-type", "value": "subagent" },
+            { "name": "osg:target-id", "value": "test-runner" },
+            { "name": "osg:allow-skill", "value": "testing" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:allow-tool", "value": "grep" },
+            { "name": "osg:allow-tool", "value": "glob" },
+            { "name": "osg:allow-tool", "value": "run_tests" },
+            { "name": "osg:deny-tool", "value": "write_file" },
+            { "name": "osg:deny-tool", "value": "edit_file" },
+            { "name": "osg:deny-tool", "value": "execute" }
+          ]
+        },
+        {
+          "control-id": "sg-skl-skill-scanner",
+          "props": [
+            { "name": "osg:target-type", "value": "skill" },
+            { "name": "osg:target-id", "value": "skill-scanner" },
+            { "name": "osg:max-scan-severity", "value": "medium" },
+            { "name": "osg:allow-tool", "value": "scan_skill" },
+            { "name": "osg:allow-tool", "value": "inspect_skill_manifest" }
+          ]
+        },
+        {
+          "control-id": "sg-skl-oscal-authoring",
+          "props": [
+            { "name": "osg:target-type", "value": "skill" },
+            { "name": "osg:target-id", "value": "oscal-authoring" },
+            { "name": "osg:max-scan-severity", "value": "low" },
+            { "name": "osg:min-score", "value": "90" },
+            { "name": "osg:required-metadata", "value": "owner=governance" },
+            { "name": "osg:allow-tool", "value": "read_file" },
+            { "name": "osg:allow-tool", "value": "grep" },
+            { "name": "osg:allow-tool", "value": "glob" },
+            { "name": "osg:reason", "value": "Curated governance skill; low tolerance for findings." }
+          ]
+        },
+        {
+          "control-id": "sg-fs-1",
+          "props": [
+            { "name": "osg:target-type", "value": "filesystem" },
+            { "name": "osg:fs-operation", "value": "write" },
+            { "name": "osg:fs-path", "value": "/skills/shared/**" },
+            { "name": "osg:fs-mode", "value": "deny" },
+            { "name": "osg:reason", "value": "Shared skills are curated; agents may read but not mutate." }
+          ]
+        },
+        {
+          "control-id": "sg-fs-2",
+          "props": [
+            { "name": "osg:target-type", "value": "filesystem" },
+            { "name": "osg:fs-operation", "value": "write" },
+            { "name": "osg:fs-path", "value": "/skills/personal/**" },
+            { "name": "osg:fs-mode", "value": "interrupt" },
+            { "name": "osg:reason", "value": "Personal skills editable only with human approval." }
+          ]
+        }
+      ]
+    }
+  }
+}

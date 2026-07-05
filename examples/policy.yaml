@@ -1,0 +1,115 @@
+version: 1
+
+defaults:
+  # Anything worse than medium is blocked before the skill is passed to DeepAgents.
+  max_scan_severity: medium
+  allow_skills: []
+  deny_tools:
+    - shell
+    - bash
+    - execute
+    - eval
+    - mcp__dangerous__*
+
+agents:
+  "*":
+    max_scan_severity: medium
+    allow_tools:
+      - read_file
+      - grep
+      - glob
+      - task
+    deny_tools:
+      - write_file
+      - edit_file
+      - execute
+
+  supervisor:
+    allow_skills:
+      - oscal-*
+      - guardrails-*
+      - langgraph-docs
+    allow_tools:
+      - read_file
+      - grep
+      - glob
+      - task
+      - scan_skill
+      - inspect_skill_manifest
+    deny_tools:
+      - write_file
+      - edit_file
+      - execute
+    interrupt_at_severity: medium
+
+  coding-agent:
+    allow_skills:
+      - langgraph-*
+      - code-review
+      - testing
+    allow_tools:
+      - read_file
+      - grep
+      - glob
+      - write_file
+      - edit_file
+      - run_tests
+      - task
+    deny_tools:
+      - execute
+      - shell
+    max_scan_severity: medium
+
+subagents:
+  researcher:
+    allow_skills:
+      - langgraph-docs
+      - web-research
+    allow_tools:
+      - web_search
+      - fetch_url
+      - read_file
+    deny_tools:
+      - write_file
+      - edit_file
+      - execute
+
+  test-runner:
+    allow_skills:
+      - testing
+    allow_tools:
+      - read_file
+      - grep
+      - glob
+      - run_tests
+    deny_tools:
+      - write_file
+      - edit_file
+      - execute
+
+skills:
+  skill-scanner:
+    max_scan_severity: medium
+    allow_tools:
+      - scan_skill
+      - inspect_skill_manifest
+
+  oscal-authoring:
+    max_scan_severity: low
+    required_metadata:
+      owner: governance
+    allow_tools:
+      - read_file
+      - grep
+      - glob
+
+filesystem_permissions:
+  # Shared skills are curated; agents can read them, but cannot mutate them.
+  - operations: ["write"]
+    paths: ["/skills/shared/**"]
+    mode: "deny"
+
+  # Personal skills can be edited, but only with human approval.
+  - operations: ["write"]
+    paths: ["/skills/personal/**"]
+    mode: "interrupt"

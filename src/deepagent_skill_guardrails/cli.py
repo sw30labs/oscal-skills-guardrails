@@ -238,7 +238,7 @@ def cmd_admit(args) -> int:
         )
 
     if args.lock_out:
-        registry.save_digest_lock(args.lock_out)
+        registry.save_digest_lock(args.lock_out, relative_to=skills_root)
         print(f"digest lock written: {args.lock_out}", file=sys.stderr)
     if args.results:
         sink.write(args.results)

@@ -56,6 +56,22 @@ def test_verify_registry_digests_raises_and_audits(tmp_path: Path) -> None:
     assert events[0]["matched"] == ["skill.digest_mismatch"]
 
 
+def test_digest_lock_relative_paths_portable(tmp_path: Path) -> None:
+    import json
+
+    skills_root = tmp_path / "skills"
+    make_skill(skills_root, "alpha")
+    registry = SkillRegistry(scanner=NoopSkillScanner())
+    registry.ingest_many(registry.discover(skills_root))
+
+    lock = registry.save_digest_lock(tmp_path / "skills.lock.json", relative_to=skills_root)
+    data = json.loads(lock.read_text())
+    assert data["skills"]["alpha"]["path"] == "alpha"  # no machine-specific prefix
+
+    statuses = verify_digest_lock(lock, skills_root=skills_root)
+    assert statuses["alpha"]["status"] == "ok"
+
+
 def test_digest_lock_roundtrip_and_drift(tmp_path: Path) -> None:
     skills_root = tmp_path / "skills"
     make_skill(skills_root, "alpha")

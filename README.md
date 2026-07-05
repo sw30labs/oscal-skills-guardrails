@@ -1,6 +1,7 @@
 # oscal-skills-guardrails
 
-![tests](https://img.shields.io/badge/tests-35%20passing-2ce6c8?style=flat-square)
+![skill-gate](https://github.com/sw30labs/oscal-skills-guardrails/actions/workflows/skill-gate.yml/badge.svg)
+![tests](https://img.shields.io/badge/tests-36%20passing-2ce6c8?style=flat-square)
 ![python](https://img.shields.io/badge/python-3.10%2B-38bdf8?style=flat-square)
 ![oscal](https://img.shields.io/badge/policy-NIST%20OSCAL%201.1.2-8b5cf6?style=flat-square)
 ![deepagents](https://img.shields.io/badge/runtime-LangGraph%20DeepAgents-16a766?style=flat-square)
@@ -67,7 +68,7 @@ as the compliance artifact, with every control mapped to NIST SP 800-53.
 ```bash
 git clone https://github.com/sw30labs/oscal-skills-guardrails.git
 cd oscal-skills-guardrails
-pip install -e '.[dev]' && pytest        # 35 passing
+pip install -e '.[dev]' && pytest        # 36 passing
 
 # point the judge at your local oMLX server (or any OpenAI-compatible endpoint)
 export SKILL_JUDGE_MODEL='Qwen3.6-27B-bf16'
@@ -93,6 +94,23 @@ PYTHONPATH=src python3 -m deepagent_skill_guardrails.cli verify \
 
 Approve an interrupt-effect skill after human review — the approval is recorded in
 the audit trail: `admit ... --approve reviewed-skill`.
+
+## The gate as a CI status check
+
+[`.github/workflows/skill-gate.yml`](.github/workflows/skill-gate.yml) runs on every
+PR touching the skill catalog, the policy, or the gate itself — two required checks:
+
+**admit** adjudicates the catalog against the OSCAL profile (Skillspector engine
+checked out from its repo; the LLM judge joins when repo vars `SKILL_JUDGE_URL` +
+`SKILL_JUDGE_MODEL` and secret `SKILL_JUDGE_API_KEY` point at an OpenAI-compatible
+endpoint). Denials and unapproved interrupts fail the build; the decision table
+lands in the job summary and the full OSCAL `assessment-results.json` is uploaded
+as the build artifact — every merged PR carries its compliance evidence.
+
+**verify** recomputes every skill digest against the committed
+[`skills.lock.json`](skills.lock.json). Touching a skill without regenerating the
+lock in the same PR fails the build — the lockfile diff is the review signal,
+exactly like a dependency lockfile, but for agent capabilities.
 
 ## The two evidence streams
 
@@ -197,14 +215,16 @@ src/deepagent_skill_guardrails/
   middleware.py deepagents_factory.py           # runtime enforcement
   cli.py mcp_server.py             # admission CLI, scanner-as-MCP
 examples/                          # policy.yaml + demo skills
-tests/                             # 35 tests, no network, stub judges
+skills.lock.json                   # committed digest baseline (SG-2, verified in CI)
+.github/workflows/skill-gate.yml   # the CI gate: admit + verify on every skill PR
+tests/                             # 36 tests, no network, stub judges
 ```
 
 ## Develop
 
 ```bash
 pip install -e '.[dev]'
-pytest                              # 35 passing, offline
+pytest                              # 36 passing, offline
 node scripts/scan_skill.mjs --pretty examples/skills/langgraph-docs
 ```
 

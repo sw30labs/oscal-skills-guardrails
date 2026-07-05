@@ -81,15 +81,27 @@ class SkillRegistry:
     def verify_all(self) -> dict[str, tuple[bool, str]]:
         return {skill_id: self.verify(skill_id) for skill_id in self.records}
 
-    def save_digest_lock(self, path: str | Path) -> Path:
-        """Persist admitted digests so integrity can be verified across processes/CI."""
+    def save_digest_lock(self, path: str | Path, *, relative_to: Path | None = None) -> Path:
+        """Persist admitted digests so integrity can be verified across processes/CI.
+
+        Pass `relative_to` (usually the skills root) to record portable relative paths —
+        required when the lockfile is committed and verified on other machines/checkouts.
+        """
+
+        def _portable(record: SkillRecord) -> str:
+            if relative_to is not None:
+                try:
+                    return record.path.resolve().relative_to(Path(relative_to).resolve()).as_posix()
+                except ValueError:
+                    pass
+            return str(record.path)
 
         path = Path(path)
         doc = {
             "version": 1,
             "generated": datetime.now(timezone.utc).isoformat(),
             "skills": {
-                skill_id: {"digest": record.digest, "path": str(record.path)}
+                skill_id: {"digest": record.digest, "path": _portable(record)}
                 for skill_id, record in sorted(self.records.items())
             },
         }

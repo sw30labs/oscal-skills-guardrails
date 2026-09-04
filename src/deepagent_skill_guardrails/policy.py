@@ -241,17 +241,20 @@ class GuardrailPolicy:
             - operations: ["write"]
               paths: ["/skills/shared/**"]
               mode: "deny"
+
+        deepagents >= 0.7 exposes recursive `delete` as a *write* operation: any
+        write-allow can authorize subtree deletes. Unless the policy already has
+        an explicit delete allow, this method always appends a deny-write rule on
+        `/**` so recursive deletes fail closed by default.
         """
 
-        rules = self.raw.get("filesystem_permissions") or []
-        if not rules:
-            return []
+        rules = list(self.raw.get("filesystem_permissions") or [])
         try:
             from deepagents import FilesystemPermission
         except Exception as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("deepagents is required to materialize FilesystemPermission") from exc
 
-        return [
+        permissions = [
             FilesystemPermission(
                 operations=_as_list(rule.get("operations")),
                 paths=_as_list(rule.get("paths")),
@@ -259,6 +262,37 @@ class GuardrailPolicy:
             )
             for rule in rules
         ]
+
+        if not _has_explicit_delete_allow(rules):
+            # FilesystemOperation is only read|write; delete is classified as write.
+            permissions.append(
+                FilesystemPermission(
+                    operations=["write"],
+                    paths=["/**"],
+                    mode="deny",
+                )
+            )
+        return permissions
+
+
+
+def _has_explicit_delete_allow(rules: list[Any]) -> bool:
+    """Return True if policy YAML explicitly allows delete (opt-out of auto-deny).
+
+    deepagents 0.7 maps the `delete` tool to the `write` operation class. An
+    explicit opt-in is either `operations: ["delete"]` with mode allow, or a
+    write allow that lists `"delete"` alongside other ops for clarity.
+    """
+
+    for rule in rules:
+        if not isinstance(rule, dict):
+            continue
+        if str(rule.get("mode", "allow")).lower() != "allow":
+            continue
+        ops = {str(op).lower() for op in _as_list(rule.get("operations"))}
+        if "delete" in ops:
+            return True
+    return False
 
 
 def _first_not_none(*values: Any) -> Any:

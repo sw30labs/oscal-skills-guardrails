@@ -189,6 +189,18 @@ def create_guarded_deep_agent(
 
     permissions = policy.deepagents_filesystem_permissions()
 
+    # Prefer a read-biased FilesystemMiddleware allowlist when the API supports
+    # `tools=` (deepagents >= 0.7). create_deep_agent merges middleware by name,
+    # so this replaces the default full-tool FilesystemMiddleware. Callers that
+    # already pass FilesystemMiddleware via extra_middleware keep ownership.
+    if not any(_is_filesystem_middleware(m) for m in main_middleware):
+        fs_mw = _maybe_read_biased_filesystem_middleware(backend=backend, permissions=permissions)
+        if fs_mw is not None:
+            if backend is None:
+                # Keep the same backend instance create_deep_agent would use.
+                backend = getattr(fs_mw, "backend", None)
+            main_middleware.append(fs_mw)
+
     return create_deep_agent(
         model=model,
         tools=main_tools,
@@ -202,3 +214,43 @@ def create_guarded_deep_agent(
         store=store,
         **kwargs,
     )
+
+
+_AUDITOR_FS_TOOLS = ("ls", "read_file", "glob", "grep")
+
+
+def _is_filesystem_middleware(middleware: Any) -> bool:
+    name = getattr(middleware, "name", None) or type(middleware).__name__
+    return name == "FilesystemMiddleware"
+
+
+def _maybe_read_biased_filesystem_middleware(*, backend: Any | None, permissions: list[Any]):
+    """Build FilesystemMiddleware(tools=read-biased) when deepagents exposes it.
+
+    Returns None on older deepagents (no `tools=` kwarg) so permissions-only
+    hardening still applies.
+    """
+
+    try:
+        from deepagents.middleware.filesystem import FilesystemMiddleware
+    except Exception:  # pragma: no cover - optional / API drift
+        return None
+
+    try:
+        from deepagents.backends import StateBackend
+    except Exception:  # pragma: no cover
+        StateBackend = None  # type: ignore[misc, assignment]
+
+    fs_backend = backend
+    if fs_backend is None and StateBackend is not None:
+        fs_backend = StateBackend()
+
+    try:
+        return FilesystemMiddleware(
+            backend=fs_backend,
+            tools=list(_AUDITOR_FS_TOOLS),
+            _permissions=permissions or None,
+        )
+    except TypeError:
+        # Older deepagents without tools= — fall back to permissions deny only.
+        return None

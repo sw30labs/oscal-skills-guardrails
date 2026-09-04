@@ -194,6 +194,19 @@ re-verifies digests (`on_digest_mismatch="deny"` or `"rescan"`), installs runtim
 middleware that gates every tool call and raises `SkillIntegrityError` if an
 admitted skill mutates mid-session, and materializes filesystem permissions.
 
+### deepagents 0.7+ filesystem delete lockdown
+
+In deepagents ≥ 0.7 the recursive `delete` tool counts as a **write** permission —
+any write-allow can authorize subtree deletes. `GuardrailPolicy.deepagents_filesystem_permissions()`
+therefore **always appends** a deny-write rule on `/**` unless the policy YAML
+already contains an explicit delete allow (`operations` including `"delete"`,
+`mode: allow`). `create_guarded_deep_agent` also prefers a read-biased
+`FilesystemMiddleware(tools=["ls","read_file","glob","grep"])` when that API is
+available (replacing the default full tool set by middleware name); agents that
+need write/edit should pass their own `FilesystemMiddleware` via `extra_middleware`.
+Requires optional extra `deepagents>=0.7.13`.
+
+
 ## Fail-closed invariants
 
 Unknown skill → not loaded. Scanner crash, timeout, or bad JSON → critical finding.

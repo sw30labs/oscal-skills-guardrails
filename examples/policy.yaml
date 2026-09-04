@@ -104,6 +104,8 @@ skills:
       - glob
 
 filesystem_permissions:
+  # deepagents 0.7+: delete is a write. Guardrails auto-appends deny write on /**
+  # unless you add an explicit delete allow (operations including "delete").
   # Shared skills are curated; agents can read them, but cannot mutate them.
   - operations: ["write"]
     paths: ["/skills/shared/**"]

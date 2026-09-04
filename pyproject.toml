@@ -12,7 +12,7 @@ skill-guardrails = "deepagent_skill_guardrails.cli:main"
 
 [project.optional-dependencies]
 deepagents = [
-  "deepagents>=0.6.8",
+  "deepagents>=0.7.13",
   "langchain-mcp-adapters>=0.1.0",
 ]
 mcp = [

@@ -68,3 +68,60 @@ def test_policy_gates_tool_calls() -> None:
     assert policy.check_tool_call(ctx, "read_file").allowed
     assert policy.check_tool_call(ctx, "execute").effect == "deny"
     assert policy.check_tool_call(ctx, "write_file").effect == "deny"
+
+
+def test_deepagents_permissions_include_delete_deny() -> None:
+    """deepagents 0.7 maps delete→write; guardrails always append deny-write on /**."""
+    pytest = __import__("pytest")
+    pytest.importorskip("deepagents")
+
+    policy = GuardrailPolicy(
+        {
+            "filesystem_permissions": [
+                {"operations": ["write"], "paths": ["/skills/shared/**"], "mode": "deny"},
+            ]
+        }
+    )
+    perms = policy.deepagents_filesystem_permissions()
+    assert len(perms) >= 2
+    deny_star = [
+        p
+        for p in perms
+        if getattr(p, "mode", None) == "deny"
+        and "write" in list(getattr(p, "operations", []))
+        and "/**" in list(getattr(p, "paths", []))
+    ]
+    assert deny_star, "expected auto-appended deny write on /**"
+
+
+def test_deepagents_permissions_skip_delete_deny_when_explicit_allow() -> None:
+    pytest = __import__("pytest")
+    pytest.importorskip("deepagents")
+
+    policy = GuardrailPolicy(
+        {
+            "filesystem_permissions": [
+                {"operations": ["delete"], "paths": ["/tmp/**"], "mode": "allow"},
+            ]
+        }
+    )
+    perms = policy.deepagents_filesystem_permissions()
+    deny_star = [
+        p
+        for p in perms
+        if getattr(p, "mode", None) == "deny"
+        and "write" in list(getattr(p, "operations", []))
+        and "/**" in list(getattr(p, "paths", []))
+    ]
+    assert not deny_star
+
+
+def test_deepagents_permissions_default_deny_even_without_yaml_rules() -> None:
+    pytest = __import__("pytest")
+    pytest.importorskip("deepagents")
+
+    perms = GuardrailPolicy({}).deepagents_filesystem_permissions()
+    assert len(perms) == 1
+    assert perms[0].mode == "deny"
+    assert perms[0].operations == ["write"]
+    assert perms[0].paths == ["/**"]
